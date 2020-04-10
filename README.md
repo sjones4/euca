@@ -9,11 +9,18 @@
 
 ### Usage
 
-The CLI currently supports the Eucalyptus Cloud properties administrative service:
+The CLI currently supports administration for Eucalyptus Cloud properties and services:
 
     euca properties list --property-prefix dns
     euca properties get --name dns.enabled
     euca properties set --name dns.enabled --value true
+    
+    euca services describe
+    euca services describe-certificates
+    euca services describe-types
+    euca services modify --name compute-1 --state STOPPED
+    euca services register --type compute --partition api --host 10.10.10.10 --name compute-1
+    euca services deregister --name compute-1
 
 The following global options (flags) are available:
 
