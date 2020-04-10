@@ -6,9 +6,8 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/sjones4/eucalyptus-sdk-go/service/euprop"
-	"log"
-
 	"github.com/spf13/cobra"
 )
 
@@ -17,26 +16,18 @@ var setPropertiesCmd = &cobra.Command{
 	Use:   "set",
 	Short: "Set a property value by name",
 	Run: func(cmd *cobra.Command, args []string) {
-		svc := GetPropertiesSvc()
-		propertyName, err := cmd.Flags().GetString("name")
-		if err != nil {
-			log.Fatalf("Error modifying property %s\n", err.Error())
-		}
-		propertyValue, err := cmd.Flags().GetString("value")
-		if err != nil {
-			log.Fatalf("Error modifying property: %s\n", err.Error())
-		}
-		request := svc.ModifyPropertyValueRequest(&euprop.ModifyPropertyValueInput{
-			Name:  &propertyName,
-			Value: &propertyValue,
+		input := &euprop.ModifyPropertyValueInput{}
+		DoInput(cmd, func(ccmd *CheckedCommand) {
+			input.Name = aws.String(ccmd.GetFlagString("name"))
+			input.Value = aws.String(ccmd.GetFlagString("value"))
 		})
-		resp, err := request.Send(context.Background())
-		if err != nil {
-			log.Fatalf("Error modifying property: %s\n", err.Error())
-		}
-		fmt.Printf("PROPERTY\t%s\n", *resp.Name)
-		fmt.Printf("OLDVALUE\t%s\n", *resp.OldValue)
-		fmt.Printf("VALUE\t%s\n", *resp.Value)
+		svc := GetPropertiesSvc()
+		request := svc.ModifyPropertyValueRequest(input)
+		response, err := request.Send(context.Background())
+		DoCommandError(cmd, err)
+		fmt.Printf("PROPERTY\t%s\n", *response.Name)
+		fmt.Printf("OLDVALUE\t%s\n", *response.OldValue)
+		fmt.Printf("VALUE\t%s\n", *response.Value)
 	},
 }
 

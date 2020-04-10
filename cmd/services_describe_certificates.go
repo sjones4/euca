@@ -9,7 +9,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/sjones4/eucalyptus-sdk-go/service/euserv"
 	"github.com/spf13/cobra"
-	"log"
 	"strings"
 )
 
@@ -18,28 +17,19 @@ var describeServiceCertificatesCmd = &cobra.Command{
 	Use:   "describe-certificates",
 	Short: "List service certificates",
 	Run: func(cmd *cobra.Command, args []string) {
-		svc := GetServicesSvc()
-		formatString, err := cmd.Flags().GetString("format")
-		if err != nil {
-			log.Fatalf("Error describing service certificates: %s", err.Error())
-		}
-		digest, err := cmd.Flags().GetString("digest")
-		if err != nil {
-			log.Fatalf("Error describing service certificates: %s", err.Error())
-		}
-		outputCertificate, err := cmd.Flags().GetBool("certificate")
-		if err != nil {
-			log.Fatalf("Error describing service certificates: %s", err.Error())
-		}
-		request := svc.DescribeServiceCertificatesRequest(&euserv.DescribeServiceCertificatesInput{
-			Format:            euserv.CertificateFormatEnum(formatString),
-			FingerprintDigest: &digest,
+		input := &euserv.DescribeServiceCertificatesInput{}
+		outputCertificate := false
+		DoInput(cmd, func(ccmd *CheckedCommand) {
+			input.Format = euserv.CertificateFormatEnum(ccmd.GetFlagString("format"))
+			input.FingerprintDigest = aws.String(ccmd.GetFlagString("digest"))
+
+			outputCertificate = ccmd.GetFlagBool("certificate")
 		})
-		resp, err := request.Send(context.Background())
-		if err != nil {
-			log.Fatalf("Error describing service certificates: %s", err.Error())
-		}
-		for _, serviceCertificate := range resp.DescribeServiceCertificatesOutput.ServiceCertificates {
+		svc := GetServicesSvc()
+		request := svc.DescribeServiceCertificatesRequest(input)
+		response, err := request.Send(context.Background())
+		DoCommandError(cmd, err)
+		for _, serviceCertificate := range response.DescribeServiceCertificatesOutput.ServiceCertificates {
 			fmt.Printf("CERTIFICATE\t%s\t%s\t%s\t%s\n",
 				aws.StringValue(serviceCertificate.ServiceType),
 				aws.StringValue(serviceCertificate.CertificateUsage),

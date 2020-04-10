@@ -7,8 +7,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/sjones4/eucalyptus-sdk-go/service/euprop"
-	"log"
-
 	"github.com/spf13/cobra"
 )
 
@@ -17,20 +15,16 @@ var getPropertiesCmd = &cobra.Command{
 	Use:   "get",
 	Short: "Get a property value by name",
 	Run: func(cmd *cobra.Command, args []string) {
-		svc := GetPropertiesSvc()
-		propertyName, err := cmd.Flags().GetString("name")
-		if err != nil {
-			log.Fatalf("Error getting property: %s", err.Error())
-		}
-		request := svc.DescribePropertiesRequest(&euprop.DescribePropertiesInput{
-			Properties: []string{propertyName},
+		input := &euprop.DescribePropertiesInput{}
+		DoInput(cmd, func(ccmd *CheckedCommand) {
+			input.Properties = []string{ccmd.GetFlagString("name")}
 		})
-		resp, err := request.Send(context.Background())
-		if err != nil {
-			log.Fatalf("Error getting property: %s", err.Error())
-		}
-		for _, property := range resp.DescribePropertiesOutput.Properties {
-			if property.Name != nil && *property.Name == propertyName {
+		svc := GetPropertiesSvc()
+		request := svc.DescribePropertiesRequest(input)
+		response, err := request.Send(context.Background())
+		DoCommandError(cmd, err)
+		for _, property := range response.DescribePropertiesOutput.Properties {
+			if property.Name != nil && *property.Name == input.Properties[0] {
 				fmt.Printf("PROPERTY\t%s\t%s\n", *property.Name, *property.Value)
 				fmt.Printf("DESCRIPTION\t%s\n", *property.Description)
 			}

@@ -6,13 +6,10 @@ package cmd
 import (
 	"github.com/sjones4/eucalyptus-sdk-go/service/euserv"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
-	"log"
-	"os"
-	"strings"
 )
 
 const (
+	BootstrapDnsLabel                = "bootstrap"
 	DefaultBootstrapServicesEndpoint = "http://127.0.0.1:8773/services/Empyrean"
 	EnvBootstrapServiceUrl           = "EUCA_BOOTSTRAP_URL"
 )
@@ -28,32 +25,11 @@ func init() {
 }
 
 func GetServicesEndpoint() string {
-	servicesEndpoint := viper.GetString(ConfigEndpointUrl)
-
-	if servicesEndpoint == "" {
-		servicesEndpoint = os.Getenv(EnvBootstrapServiceUrl)
-	}
-
-	endpointUrlSuffix := viper.GetString(ConfigEndpointUrlSuffix)
-	endpointProtocol := viper.GetString(ConfigEndpointProtocol)
-	if servicesEndpoint == "" && endpointUrlSuffix != "" {
-		servicesEndpoint = strings.Join([]string{endpointProtocol, "://bootstrap.", endpointUrlSuffix}, "")
-	}
-
-	if servicesEndpoint == "" {
-		servicesEndpoint = DefaultBootstrapServicesEndpoint
-	}
-
-	servicesEndpoint = strings.TrimSuffix(servicesEndpoint, "/")
-
-	return servicesEndpoint
+	return GetEndpoint(EnvBootstrapServiceUrl, BootstrapDnsLabel, DefaultBootstrapServicesEndpoint)
 }
 
 func GetServicesSvc() *euserv.Client {
 	servicesEndpoint := GetServicesEndpoint()
-	cfg, err := GetAwsConfig(servicesEndpoint)
-	if err != nil {
-		log.Fatalf("Error with default configuration: %s", err.Error())
-	}
+	cfg := GetAwsConfig(servicesEndpoint)
 	return euserv.New(cfg)
 }

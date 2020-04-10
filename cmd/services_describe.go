@@ -9,7 +9,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/sjones4/eucalyptus-sdk-go/service/euserv"
 	"github.com/spf13/cobra"
-	"log"
 )
 
 // describeServicesCmd represents the describe command
@@ -17,19 +16,15 @@ var describeServicesCmd = &cobra.Command{
 	Use:   "describe",
 	Short: "List service states",
 	Run: func(cmd *cobra.Command, args []string) {
-		svc := GetServicesSvc()
-		listAll, err := cmd.Flags().GetBool("all")
-		if err != nil {
-			log.Fatalf("Error describing services: %s", err.Error())
-		}
-		request := svc.DescribeServicesRequest(&euserv.DescribeServicesInput{
-			ListAll: &listAll,
+		input := &euserv.DescribeServicesInput{}
+		DoInput(cmd, func(ccmd *CheckedCommand) {
+			input.ListAll = aws.Bool(ccmd.GetFlagBool("all"))
 		})
-		resp, err := request.Send(context.Background())
-		if err != nil {
-			log.Fatalf("Error describing services: %s", err.Error())
-		}
-		for _, service := range resp.DescribeServicesOutput.ServiceStatuses {
+		svc := GetServicesSvc()
+		request := svc.DescribeServicesRequest(input)
+		response, err := request.Send(context.Background())
+		DoCommandError(cmd, err)
+		for _, service := range response.DescribeServicesOutput.ServiceStatuses {
 			fmt.Printf("SERVICE\t%s\t%s\t%s\t%s\n",
 				aws.StringValue(service.ServiceId.Type),
 				aws.StringValue(service.ServiceId.Partition),

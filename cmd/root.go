@@ -7,11 +7,12 @@ import (
 	"fmt"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/aws/external"
-	"github.com/spf13/cobra"
-	"os"
-
 	homedir "github.com/mitchellh/go-homedir"
+	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"log"
+	"os"
+	"strings"
 )
 
 const (
@@ -78,14 +79,86 @@ func initConfig() {
 	}
 }
 
-func GetAwsConfig(endpoint string) (aws.Config, error) {
+type CheckedCommandCallback func(cmd *CheckedCommand)
+
+type CheckedCommand struct {
+	cmd *cobra.Command
+	err error
+}
+
+func (cmd *CheckedCommand) GetFlagString(name string) (value string) {
+	if cmd.err == nil {
+		value, cmd.err = cmd.cmd.Flags().GetString(name)
+	}
+	return
+}
+
+func (cmd *CheckedCommand) GetFlagInt(name string) (value int) {
+	if cmd.err == nil {
+		value, cmd.err = cmd.cmd.Flags().GetInt(name)
+	}
+	return
+}
+
+func (cmd *CheckedCommand) GetFlagBool(name string) (value bool) {
+	if cmd.err == nil {
+		value, cmd.err = cmd.cmd.Flags().GetBool(name)
+	}
+	return
+}
+
+func WithCheckedCommand(cmd *cobra.Command, callback CheckedCommandCallback) error {
+	ccmd := &CheckedCommand{cmd: cmd}
+	callback(ccmd)
+	return ccmd.err
+}
+
+func DoInput(cmd *cobra.Command, callback CheckedCommandCallback) {
+	err := WithCheckedCommand(cmd, callback)
+	DoCommandError(cmd, err)
+}
+
+func DoCommandError(cmd *cobra.Command, err error) {
+	if err != nil {
+		log.Fatalf("Error in %s commmand: %s\n", cmd.Name(), err.Error())
+	}
+}
+
+func GetEndpoint(envKey string, dnsLabel string, defaultEndpoint string) string {
+	endpoint := viper.GetString(ConfigEndpointUrl)
+
+	if endpoint == "" {
+		endpoint = os.Getenv(envKey)
+	}
+
+	endpointUrlSuffix := viper.GetString(ConfigEndpointUrlSuffix)
+	endpointProtocol := viper.GetString(ConfigEndpointProtocol)
+	if endpoint == "" && endpointUrlSuffix != "" {
+		endpoint = strings.Join([]string{endpointProtocol, "://", dnsLabel, ".", endpointUrlSuffix}, "")
+	}
+
+	if endpoint == "" {
+		endpoint = defaultEndpoint
+	}
+
+	endpoint = strings.TrimSuffix(endpoint, "/")
+
+	return endpoint
+}
+
+func GetAwsConfig(endpoint string) aws.Config {
 	cfg, err := external.LoadDefaultAWSConfig(
-		external.WithEndpointResolverFunc(func(aws.EndpointResolver) aws.EndpointResolver { return aws.ResolveWithEndpointURL(endpoint) }),
+		external.WithEndpointResolverFunc(func(aws.EndpointResolver) aws.EndpointResolver {
+			return aws.ResolveWithEndpointURL(endpoint)
+		}),
 		external.WithSharedConfigProfile(viper.GetString(ConfigProfile)),
 		external.WithRegion(viper.GetString(ConfigRegion)),
 	)
-	if err == nil && debugLogging {
+	if err != nil {
+		log.Fatalf("Error with default configuration: %s", err.Error())
+	}
+	if debugLogging {
 		cfg.LogLevel = aws.LogDebugWithHTTPBody
 	}
-	return cfg, err
+	return cfg
 }

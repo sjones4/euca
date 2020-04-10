@@ -9,7 +9,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/sjones4/eucalyptus-sdk-go/service/euserv"
 	"github.com/spf13/cobra"
-	"log"
 )
 
 // deregisterServiceCmd represents the deregister service command
@@ -17,24 +16,16 @@ var deregisterServiceCmd = &cobra.Command{
 	Use:   "deregister",
 	Short: "Deregister a service",
 	Run: func(cmd *cobra.Command, args []string) {
-		svc := GetServicesSvc()
-		name, err := cmd.Flags().GetString("name")
-		if err != nil {
-			log.Fatalf("Error deregistering service: %s", err.Error())
-		}
-		serviceType, err := cmd.Flags().GetString("type")
-		if err != nil {
-			log.Fatalf("Error deregistering service: %s", err.Error())
-		}
-		request := svc.DeregisterServiceRequest(&euserv.DeregisterServiceInput{
-			Name: &name,
-			Type: &serviceType,
+		input := &euserv.DeregisterServiceInput{}
+		DoInput(cmd, func(ccmd *CheckedCommand) {
+			input.Name = aws.String(ccmd.GetFlagString("name"))
+			input.Type = aws.String(ccmd.GetFlagString("type"))
 		})
-		resp, err := request.Send(context.Background())
-		if err != nil {
-			log.Fatalf("Error deregistering service: %s", err.Error())
-		}
-		for _, serviceId := range resp.DeregisterServiceOutput.DeregisteredServices {
+		svc := GetServicesSvc()
+		request := svc.DeregisterServiceRequest(input)
+		response, err := request.Send(context.Background())
+		DoCommandError(cmd, err)
+		for _, serviceId := range response.DeregisterServiceOutput.DeregisteredServices {
 			fmt.Printf("SERVICE\t%s\t%s\t%s\n",
 				aws.StringValue(serviceId.Type),
 				aws.StringValue(serviceId.Partition),

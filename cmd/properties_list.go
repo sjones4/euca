@@ -7,8 +7,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/sjones4/eucalyptus-sdk-go/service/euprop"
-	"log"
-
 	"github.com/spf13/cobra"
 )
 
@@ -17,23 +15,18 @@ var listPropertiesCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List property names and values",
 	Run: func(cmd *cobra.Command, args []string) {
-		svc := GetPropertiesSvc()
-		propertyPrefix, err := cmd.Flags().GetString("property-prefix")
-		if err != nil {
-			log.Fatalf("Error describing properties: %s", err.Error())
-		}
-		var requestProperties []string
-		if propertyPrefix != "" {
-			requestProperties = []string{propertyPrefix}
-		}
-		request := svc.DescribePropertiesRequest(&euprop.DescribePropertiesInput{
-			Properties: requestProperties,
+		input := &euprop.DescribePropertiesInput{}
+		DoInput(cmd, func(ccmd *CheckedCommand) {
+			propertyPrefix := ccmd.GetFlagString("property-prefix")
+			if propertyPrefix != "" {
+				input.Properties = []string{propertyPrefix}
+			}
 		})
-		resp, err := request.Send(context.Background())
-		if err != nil {
-			log.Fatalf("Error describing properties: %s", err.Error())
-		}
-		for _, property := range resp.DescribePropertiesOutput.Properties {
+		svc := GetPropertiesSvc()
+		request := svc.DescribePropertiesRequest(input)
+		response, err := request.Send(context.Background())
+		DoCommandError(cmd, err)
+		for _, property := range response.DescribePropertiesOutput.Properties {
 			fmt.Printf("PROPERTY\t%s\t%s\n", *property.Name, *property.Value)
 		}
 	},
