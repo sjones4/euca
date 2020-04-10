@@ -22,6 +22,7 @@ var describeServiceCertificatesCmd = &cobra.Command{
 		DoInput(cmd, func(ccmd *CheckedCommand) {
 			input.Format = euserv.CertificateFormatEnum(ccmd.GetFlagString("format"))
 			input.FingerprintDigest = aws.String(ccmd.GetFlagString("digest"))
+			input.Filters = ServiceFilters(ccmd)
 
 			outputCertificate = ccmd.GetFlagBool("certificate")
 		})
@@ -52,4 +53,6 @@ func init() {
 	describeServiceCertificatesCmd.Flags().String("format", "pem", "Certificate format")
 	describeServiceCertificatesCmd.Flags().String("digest", "", "Certificate fingerprint digest")
 	describeServiceCertificatesCmd.Flags().Bool("certificate", false, "Output full certificates")
+
+	ServiceFilterFlags(describeServiceCertificatesCmd)
 }

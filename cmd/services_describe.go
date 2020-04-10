@@ -19,6 +19,7 @@ var describeServicesCmd = &cobra.Command{
 		input := &euserv.DescribeServicesInput{}
 		DoInput(cmd, func(ccmd *CheckedCommand) {
 			input.ListAll = aws.Bool(ccmd.GetFlagBool("all"))
+			input.Filters = ServiceFilters(ccmd)
 		})
 		svc := GetServicesSvc()
 		request := svc.DescribeServicesRequest(input)
@@ -38,4 +39,6 @@ func init() {
 	servicesCmd.AddCommand(describeServicesCmd)
 
 	describeServicesCmd.Flags().BoolP("all", "a", false, "Show all services")
+
+	ServiceFilterFlags(describeServicesCmd)
 }
