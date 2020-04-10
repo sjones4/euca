@@ -42,6 +42,7 @@ The CLI uses the AWS SDK which uses the usual environment variables:
 
 The following are CLI specific environment variables:
 
+    EUCA_BOOTSTRAP_URL
     EUCA_PROPERTIES_URL
 
 A configuration file can be created in _~/.euca/cli.yaml_ with global options to use for each run. e.g.:
