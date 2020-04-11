@@ -1,5 +1,7 @@
 ## Eucalyptus CLI
 
+[![Build Status](https://dev.azure.com/sjones4/eucalyptus/_apis/build/status/euca-go-ci?branchName=master)](https://dev.azure.com/sjones4/eucalyptus/_build/latest?definitionId=20&branchName=master)
+
 ### Building
 
     git checkout https://github.com/sjones4/euca.git
