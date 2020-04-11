@@ -34,6 +34,8 @@ For command completion with a bash shell run:
 
     . <(euca completion)
 
+For command completion support you may need additional dependencies (e.g. the _bash-completion_ rpm on CentOS 7)
+
 ### Configuration
 
 The CLI uses the AWS SDK which uses the usual environment variables:
