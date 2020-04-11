@@ -30,6 +30,10 @@ The following global options (flags) are available:
 * --endpoint-url : Specify the service endpoint
 * --profile      : Specify the AWS SDK profile to use (e.g. for credentials)
 
+For command completion with a bash shell run:
+
+    . <(euca completion)
+
 ### Configuration
 
 The CLI uses the AWS SDK which uses the usual environment variables:

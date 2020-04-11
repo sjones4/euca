@@ -74,7 +74,7 @@ func initConfig() {
 		viper.SetConfigName("cli")
 	}
 
-	if err := viper.ReadInConfig(); err != nil {
+	if err := viper.ReadInConfig(); err != nil && viper.ConfigFileUsed() != "" {
 		fmt.Printf("Error reading configuration %s: %s\n", viper.ConfigFileUsed(), err.Error())
 	}
 }
