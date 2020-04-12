@@ -5,6 +5,7 @@ package cmd
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/sjones4/eucalyptus-sdk-go/service/euserv"
@@ -13,9 +14,10 @@ import (
 
 // modifyServiceCmd represents the modify service command
 var modifyServiceCmd = &cobra.Command{
-	Use:   "modify",
-	Short: "Modify service state",
-	Run: func(cmd *cobra.Command, args []string) {
+	Use:           "modify",
+	Short:         "Modify service state",
+	SilenceErrors: true,
+	RunE: func(cmd *cobra.Command, args []string) error {
 		input := &euserv.ModifyServiceInput{}
 		DoInput(cmd, func(ccmd *CheckedCommand) {
 			input.Name = aws.String(ccmd.GetFlagString("name"))
@@ -25,7 +27,13 @@ var modifyServiceCmd = &cobra.Command{
 		request := svc.ModifyServiceRequest(input)
 		response, err := request.Send(context.Background())
 		DoCommandError(cmd, err)
-		fmt.Printf("MODIFIED\t%t\n", aws.BoolValue(response.ModifyServiceOutput.Metadata.Return))
+		modified := aws.BoolValue(response.ModifyServiceOutput.Metadata.Return)
+		fmt.Printf("MODIFIED\t%t\n", modified)
+		if !modified {
+			cmd.SilenceUsage = true
+			return errors.New("modify failed")
+		}
+		return nil
 	},
 }
 

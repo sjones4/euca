@@ -5,6 +5,7 @@ package cmd
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/sjones4/eucalyptus-sdk-go/service/euserv"
@@ -13,9 +14,10 @@ import (
 
 // registerServiceCmd represents the register service command
 var registerServiceCmd = &cobra.Command{
-	Use:   "register",
-	Short: "Register a service",
-	Run: func(cmd *cobra.Command, args []string) {
+	Use:           "register",
+	Short:         "Register a service",
+	SilenceErrors: true,
+	RunE: func(cmd *cobra.Command, args []string) error {
 		input := &euserv.RegisterServiceInput{}
 		DoInput(cmd, func(ccmd *CheckedCommand) {
 			input.Name = aws.String(ccmd.GetFlagString("name"))
@@ -28,12 +30,23 @@ var registerServiceCmd = &cobra.Command{
 		request := svc.RegisterServiceRequest(input)
 		response, err := request.Send(context.Background())
 		DoCommandError(cmd, err)
-		for _, serviceId := range response.RegisterServiceOutput.RegisteredServices {
-			fmt.Printf("SERVICE\t%s\t%s\t%s\n",
-				aws.StringValue(serviceId.Type),
-				aws.StringValue(serviceId.Partition),
-				aws.StringValue(serviceId.Name))
+		registered := aws.BoolValue(response.RegistrationMetadata.ReponseMetadata.Return)
+		fmt.Printf("REGISTERED\t%t\n", registered)
+		if registered {
+			for _, serviceId := range response.RegisterServiceOutput.RegisteredServices {
+				fmt.Printf("SERVICE\t%s\t%s\t%s\n",
+					aws.StringValue(serviceId.Type),
+					aws.StringValue(serviceId.Partition),
+					aws.StringValue(serviceId.Name))
+			}
+		} else {
+			for _, message := range response.RegistrationMetadata.StatusMessages {
+				fmt.Printf("MESSAGE\t%s\n", aws.StringValue(message.Entry))
+			}
+			cmd.SilenceUsage = true
+			return errors.New("registration failed")
 		}
+		return nil
 	},
 }
 

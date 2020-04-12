@@ -9,7 +9,7 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mitchellh/mapstructure v1.2.2 // indirect
 	github.com/pelletier/go-toml v1.7.0 // indirect
-	github.com/sjones4/eucalyptus-sdk-go v0.0.0-20200409223919-32ae0477e213
+	github.com/sjones4/eucalyptus-sdk-go v0.0.0-20200412232505-cf31e01c6be1
 	github.com/spf13/afero v1.2.2 // indirect
 	github.com/spf13/cast v1.3.1 // indirect
 	github.com/spf13/cobra v0.0.7
