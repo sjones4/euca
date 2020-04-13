@@ -2,6 +2,10 @@
 
 [![Build Status](https://dev.azure.com/sjones4/eucalyptus/_apis/build/status/euca-go-ci?branchName=master)](https://dev.azure.com/sjones4/eucalyptus/_build/latest?definitionId=20&branchName=master)
 
+A Eucalyptus Cloud CLI written in Go using the [Eucalyptus SDK for Go](https://github.com/sjones4/eucalyptus-sdk-go)
+
+Binaries for Linux (amd64) and Windows can be downloaded from the Azure Pipelines artifacts. 
+
 ### Building
 
     git checkout https://github.com/sjones4/euca.git
